@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
@@ -15,9 +16,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.amarchaud.amdraganddrop.R
 import com.amarchaud.amdraganddrop.databinding.DialogNewUserBinding
+import com.amarchaud.amdraganddrop.domain.entity.EntityOnePerson
+import com.amarchaud.amdraganddrop.utils.textChanges
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
 
@@ -52,7 +58,6 @@ class NewUserDialog : DialogFragment() {
         _binding = DialogNewUserBinding.inflate(LayoutInflater.from(context))
         return binding.root
     }
-
 
 
     @FlowPreview
@@ -156,26 +161,21 @@ class NewUserDialog : DialogFragment() {
                 validateButton.isEnabled = false
                 validateButton.alpha = 0.5f
 
-                nameEditText
-                    .textChanges()
-                    .debounce(150)
-                    .combine(
-                        nameEditText
-                            .textChanges()
-                            .debounce(150)
-                    ) { str1, str2 ->
-                        !str1.isNullOrEmpty() && !str2.isNullOrEmpty()
-                    }.combine(locationEditText.textChanges().debounce(150)) { isOk, str ->
-                        isOk && !str.isNullOrEmpty()
-                    }.collect {
-                        if (it) {
-                            validateButton.isEnabled = true
-                            validateButton.alpha = 1f
-                        } else {
-                            validateButton.isEnabled = false
-                            validateButton.alpha = 0.5f
-                        }
+                combine(
+                    nameEditText.textChanges().debounce(150),
+                    positionEditText.textChanges().debounce(150),
+                    locationEditText.textChanges().debounce(150)
+                ) { str1, str2, str3 ->
+                    !str1.isNullOrEmpty() && !str2.isNullOrEmpty() && !str3.isNullOrEmpty()
+                }.collect {
+                    if (it) {
+                        validateButton.isEnabled = true
+                        validateButton.alpha = 1f
+                    } else {
+                        validateButton.isEnabled = false
+                        validateButton.alpha = 0.5f
                     }
+                }
             }
         }
     }
