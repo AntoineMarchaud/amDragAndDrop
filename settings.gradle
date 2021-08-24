@@ -1,0 +1,2 @@
+rootProject.name = "amDragAndDrop"
+include ':app'
